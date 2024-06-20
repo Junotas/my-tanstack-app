@@ -3,7 +3,7 @@ import "./App.css";
 import { useUsers } from "./useUsers";
 
 const App: React.FC = () => {
-  const { isLoading, error, data: users, refetch } = useUsers(); // Use refetch to update data after adding a user
+  const { isLoading, error, data: users, refetch } = useUsers();
   const [searchTerm, setSearchTerm] = useState("");
   const [newUserName, setNewUserName] = useState("");
 
@@ -18,10 +18,8 @@ const App: React.FC = () => {
   };
 
   const handleAddUser = async () => {
-    // Wait for the users data to be available
     await refetch();
 
-    // Now you can safely access the users data
     if (
       users &&
       users.some(
@@ -32,18 +30,33 @@ const App: React.FC = () => {
       return;
     }
 
-    // Generate a new id (you might want to ensure uniqueness in a real scenario)
     const newUserId =
       users && users.length > 0 ? users[users.length - 1].id + 1 : 1;
     const newUser: User = { id: newUserId, name: newUserName };
 
-    // Update localStorage
-    const updatedUsers = [...(users || []), newUser]; // Use empty array fallback if users is still undefined
+    const updatedUsers = [...(users || []), newUser];
     localStorage.setItem("users", JSON.stringify(updatedUsers));
 
-    // Clear the input field and trigger a refetch to update the UI
     setNewUserName("");
-    await refetch(); // Refetch again to update with the newly added user
+    await refetch();
+  };
+
+  const handleRemoveUser = async (userId: number) => {
+    if (!window.confirm("Are you sure you want to remove this user?")) {
+      return;
+    }
+
+    await refetch(); // Ensure users data is up-to-date
+
+    if (!users) {
+      console.error("Users data is not available.");
+      return;
+    }
+
+    const updatedUsers = users.filter((user) => user.id !== userId);
+    localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+    await refetch(); // Refetch to update UI after removal
   };
 
   if (isLoading) return <div className="container">Loading...</div>;
@@ -79,7 +92,7 @@ const App: React.FC = () => {
             Add User
           </button>
         </div>
-        <SearchResults users={filteredUsers} />
+        <SearchResults users={filteredUsers} onRemoveUser={handleRemoveUser} />
       </main>
     </div>
   );
@@ -90,7 +103,10 @@ interface User {
   name: string;
 }
 
-const SearchResults: React.FC<{ users: User[] }> = ({ users }) => {
+const SearchResults: React.FC<{
+  users: User[];
+  onRemoveUser: (userId: number) => void;
+}> = ({ users, onRemoveUser }) => {
   if (users.length === 0) {
     return <p>No users found.</p>;
   }
@@ -100,6 +116,12 @@ const SearchResults: React.FC<{ users: User[] }> = ({ users }) => {
       {users.map((user) => (
         <li key={user.id} className="user-item">
           {user.name}
+          <button
+            onClick={() => onRemoveUser(user.id)}
+            className="remove-user-btn"
+          >
+            Remove
+          </button>
         </li>
       ))}
     </ul>

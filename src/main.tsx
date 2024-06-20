@@ -12,14 +12,13 @@ const checkAndUpdateData = async (): Promise<void> => {
     const currentData = localStorage.getItem("users");
     if (currentData !== JSON.stringify(newData)) {
       localStorage.setItem("users", JSON.stringify(newData));
-      // Optionally, notify user or trigger a UI update here
     }
   } catch (error) {
     console.error("Error fetching or storing data:", error);
   }
 };
 
-// Call checkAndUpdateData periodically (e.g., using setInterval)
+// Call checkAndUpdateData every 6 secs (using setInterval)
 setInterval(checkAndUpdateData, 60000); // Check every minute
 
 fetch("/data.json")
