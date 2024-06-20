@@ -1,4 +1,3 @@
-// src/useUsers.ts
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 
 interface User {
