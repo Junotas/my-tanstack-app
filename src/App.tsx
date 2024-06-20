@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import { useUsers } from "./useUsers";
 
-// Constants for messages
 const LOADING_MESSAGE = "Loading...";
 const ERROR_PREFIX = "Error: ";
 const USER_EXISTS_MESSAGE = (userName: string) =>
@@ -13,30 +12,31 @@ const SEARCH_PLACEHOLDER = "Search users...";
 const ADD_USER_PLACEHOLDER = "Enter new user name...";
 const REMOVE_CONFIRMATION_MESSAGE =
   "Are you sure you want to remove this user?";
-const USERS_DATA_NOT_AVAILABLE = "Users data is not available.";
 const ERROR_RESETTING_USERS = "Error resetting users:";
 
 const App: React.FC = () => {
   const { isLoading, error, data: users, refetch } = useUsers();
+  const [localUsers, setLocalUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [newUserName, setNewUserName] = useState("");
 
-  const filteredUsers = users
-    ? users.filter((user) =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+  useEffect(() => {
+    if (users) {
+      setLocalUsers(users);
+    }
+  }, [users]);
+
+  const filteredUsers = localUsers.filter((user) =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
   const handleAddUser = async () => {
-    await refetch();
-
     if (
-      users &&
-      users.some(
+      localUsers.some(
         (user) => user.name.toLowerCase() === newUserName.toLowerCase()
       )
     ) {
@@ -45,13 +45,14 @@ const App: React.FC = () => {
     }
 
     const newUserId =
-      users && users.length > 0 ? users[users.length - 1].id + 1 : 1;
+      localUsers.length > 0 ? localUsers[localUsers.length - 1].id + 1 : 1;
     const newUser: User = { id: newUserId, name: newUserName };
 
-    const updatedUsers = [...(users || []), newUser];
+    const updatedUsers = [...localUsers, newUser];
     localStorage.setItem("users", JSON.stringify(updatedUsers));
 
     setNewUserName("");
+    setLocalUsers(updatedUsers); 
     await refetch();
   };
 
@@ -60,16 +61,10 @@ const App: React.FC = () => {
       return;
     }
 
-    // Fetch current users data
-    const { data: currentUsers } = await refetch();
-
-    if (!currentUsers) {
-      console.error(USERS_DATA_NOT_AVAILABLE);
-      return;
-    }
-
-    const updatedUsers = currentUsers.filter((user) => user.id !== userId);
+    const updatedUsers = localUsers.filter((user) => user.id !== userId);
     localStorage.setItem("users", JSON.stringify(updatedUsers));
+    setLocalUsers(updatedUsers); 
+    await refetch();
   };
 
   const handleResetUsers = async () => {
@@ -78,6 +73,7 @@ const App: React.FC = () => {
       const newData = await response.json();
 
       localStorage.setItem("users", JSON.stringify(newData));
+      setLocalUsers(newData); 
       await refetch();
     } catch (error) {
       console.error(ERROR_RESETTING_USERS, error);
