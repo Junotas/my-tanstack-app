@@ -4,29 +4,14 @@ import App from "./App";
 import { QueryClientProvider } from "@tanstack/react-query";
 import queryClient from "./queryClient";
 
-const checkAndUpdateData = async (): Promise<void> => {
-  try {
-    const response = await fetch("/data.json");
-    const newData = await response.json();
-
-    const currentData = localStorage.getItem("users");
-    if (currentData !== JSON.stringify(newData)) {
-      localStorage.setItem("users", JSON.stringify(newData));
-    }
-  } catch (error) {
-    console.error("Error fetching or storing data:", error);
-  }
-};
-
-// Call checkAndUpdateData every 6 secs (using setInterval)
-setInterval(checkAndUpdateData, 60000); // Check every minute
+const errorMessageStorage = 'Error fetching or storing data:';
 
 fetch("/data.json")
   .then((response) => response.json())
   .then((data) => {
-    localStorage.setItem("users", JSON.stringify(data)); // Overwrite localStorage with updated data
+    localStorage.setItem("users", JSON.stringify(data));
   })
-  .catch((error) => console.error("Error fetching or storing data:", error));
+  .catch((error) => console.error(errorMessageStorage, error));
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

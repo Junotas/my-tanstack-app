@@ -2,6 +2,20 @@ import React, { useState } from "react";
 import "./App.css";
 import { useUsers } from "./useUsers";
 
+// Constants for messages
+const LOADING_MESSAGE = "Loading...";
+const ERROR_PREFIX = "Error: ";
+const USER_EXISTS_MESSAGE = (userName: string) =>
+  `User "${userName}" already exists.`;
+const NO_USERS_FOUND_MESSAGE = "No users found.";
+const RESET_BUTTON_TEXT = "Reset to Original";
+const SEARCH_PLACEHOLDER = "Search users...";
+const ADD_USER_PLACEHOLDER = "Enter new user name...";
+const REMOVE_CONFIRMATION_MESSAGE =
+  "Are you sure you want to remove this user?";
+const USERS_DATA_NOT_AVAILABLE = "Users data is not available.";
+const ERROR_RESETTING_USERS = "Error resetting users:";
+
 const App: React.FC = () => {
   const { isLoading, error, data: users, refetch } = useUsers();
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,7 +40,7 @@ const App: React.FC = () => {
         (user) => user.name.toLowerCase() === newUserName.toLowerCase()
       )
     ) {
-      alert(`User "${newUserName}" already exists.`);
+      alert(USER_EXISTS_MESSAGE(newUserName));
       return;
     }
 
@@ -42,36 +56,53 @@ const App: React.FC = () => {
   };
 
   const handleRemoveUser = async (userId: number) => {
-    if (!window.confirm("Are you sure you want to remove this user?")) {
+    if (!window.confirm(REMOVE_CONFIRMATION_MESSAGE)) {
       return;
     }
 
-    await refetch(); // Ensure users data is up-to-date
+    // Fetch current users data
+    const { data: currentUsers } = await refetch();
 
-    if (!users) {
-      console.error("Users data is not available.");
+    if (!currentUsers) {
+      console.error(USERS_DATA_NOT_AVAILABLE);
       return;
     }
 
-    const updatedUsers = users.filter((user) => user.id !== userId);
+    const updatedUsers = currentUsers.filter((user) => user.id !== userId);
     localStorage.setItem("users", JSON.stringify(updatedUsers));
-
-    await refetch(); // Refetch to update UI after removal
   };
 
-  if (isLoading) return <div className="container">Loading...</div>;
+  const handleResetUsers = async () => {
+    try {
+      const response = await fetch("/data.json");
+      const newData = await response.json();
 
-  if (error) return <div className="container">Error: {error.message}</div>;
+      localStorage.setItem("users", JSON.stringify(newData));
+      await refetch();
+    } catch (error) {
+      console.error(ERROR_RESETTING_USERS, error);
+    }
+  };
+
+  if (isLoading) return <div className="container">{LOADING_MESSAGE}</div>;
+
+  if (error)
+    return (
+      <div className="container">
+        {ERROR_PREFIX}
+        {error.message}
+      </div>
+    );
 
   return (
     <div className="container">
       <header>
-        <h1>User Search</h1>
+        <h1>Masagal Search</h1>
         <input
           type="text"
           value={searchTerm}
           onChange={handleSearchChange}
-          placeholder="Search users..."
+          placeholder={SEARCH_PLACEHOLDER}
           className="search-input"
         />
       </header>
@@ -81,7 +112,7 @@ const App: React.FC = () => {
             type="text"
             value={newUserName}
             onChange={(e) => setNewUserName(e.target.value)}
-            placeholder="Enter new user name..."
+            placeholder={ADD_USER_PLACEHOLDER}
             className="add-user-input"
           />
           <button
@@ -93,6 +124,9 @@ const App: React.FC = () => {
           </button>
         </div>
         <SearchResults users={filteredUsers} onRemoveUser={handleRemoveUser} />
+        <button onClick={handleResetUsers} className="reset-btn">
+          {RESET_BUTTON_TEXT}
+        </button>
       </main>
     </div>
   );
@@ -108,7 +142,7 @@ const SearchResults: React.FC<{
   onRemoveUser: (userId: number) => void;
 }> = ({ users, onRemoveUser }) => {
   if (users.length === 0) {
-    return <p>No users found.</p>;
+    return <p>{NO_USERS_FOUND_MESSAGE}</p>;
   }
 
   return (
