@@ -1,4 +1,4 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 
 interface User {
   id: number;
@@ -6,10 +6,13 @@ interface User {
 }
 
 const fetchUsers = async (): Promise<User[]> => {
-  const users = localStorage.getItem('users');
+  const users = localStorage.getItem("users");
   return users ? JSON.parse(users) : [];
 };
 
 export const useUsers = (): UseQueryResult<User[], Error> => {
-  return useQuery(['users'], fetchUsers);
+  return useQuery<User[], Error>({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+  });
 };
