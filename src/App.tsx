@@ -52,7 +52,7 @@ const App: React.FC = () => {
     localStorage.setItem("users", JSON.stringify(updatedUsers));
 
     setNewUserName("");
-    setLocalUsers(updatedUsers); 
+    setLocalUsers(updatedUsers);
     await refetch();
   };
 
@@ -63,7 +63,7 @@ const App: React.FC = () => {
 
     const updatedUsers = localUsers.filter((user) => user.id !== userId);
     localStorage.setItem("users", JSON.stringify(updatedUsers));
-    setLocalUsers(updatedUsers); 
+    setLocalUsers(updatedUsers);
     await refetch();
   };
 
@@ -73,7 +73,7 @@ const App: React.FC = () => {
       const newData = await response.json();
 
       localStorage.setItem("users", JSON.stringify(newData));
-      setLocalUsers(newData); 
+      setLocalUsers(newData);
       await refetch();
     } catch (error) {
       console.error(ERROR_RESETTING_USERS, error);
@@ -94,6 +94,11 @@ const App: React.FC = () => {
     <div className="container">
       <header>
         <h1>Masagal Search</h1>
+        <button onClick={handleResetUsers} className="reset-btn">
+          {RESET_BUTTON_TEXT}
+        </button>
+      </header>
+      <main>
         <input
           type="text"
           value={searchTerm}
@@ -101,8 +106,6 @@ const App: React.FC = () => {
           placeholder={SEARCH_PLACEHOLDER}
           className="search-input"
         />
-      </header>
-      <main>
         <div className="add-user">
           <input
             type="text"
@@ -120,9 +123,6 @@ const App: React.FC = () => {
           </button>
         </div>
         <SearchResults users={filteredUsers} onRemoveUser={handleRemoveUser} />
-        <button onClick={handleResetUsers} className="reset-btn">
-          {RESET_BUTTON_TEXT}
-        </button>
       </main>
     </div>
   );
